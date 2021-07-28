@@ -16,6 +16,7 @@ int countPage = 1;
 // int countGrid = photos.length;
 
 // final photosProvider = ChangeNotifierProvider((ref) => photos);
+Gridphoto userData = Gridphoto();
 final countGridProvider = StateProvider((ref) => userData.length);
 // final photosGridProvider = StateProvider((ref) => photos);
 
@@ -25,8 +26,11 @@ final countProvider = StateProvider((ref) => userTitles.Name);
 // ignore: must_be_immutable
 class UserProfile extends ConsumerWidget {
   Object? get users => null;
-  UserProfile(this.profile);
-  Map profile;
+  UserProfile(this.profile, this.index);
+  List profile;
+  int index;
+
+  final controller = PageController();
 
   @override
   Widget build(BuildContext context,
@@ -38,9 +42,9 @@ class UserProfile extends ConsumerWidget {
     final count = watch(countProvider).state;
     String viewCount = count.toString();
     viewCount = viewCount.replaceAll('userTitles.', '');
-    Gridphoto userData = Gridphoto();
+    // Gridphoto userData = Gridphoto();
 
-    late dynamic userText = profile[count];
+    late dynamic userText = profile[index][count];
 
     return Scaffold(
       appBar: AppBar(
@@ -50,10 +54,15 @@ class UserProfile extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            // PageView.builder(
+            //     itemCount: userData.length,
+            //     itemBuilder: (context, i) {
+            //       return
             Container(
                 child: Column(children: [
               CircleAvatar(
-                backgroundImage: NetworkImage(profile[userTitles.Picture]),
+                backgroundImage:
+                    NetworkImage(profile[index][userTitles.Picture]),
                 radius: 48,
               ),
               Text('$viewCount'),
@@ -62,6 +71,9 @@ class UserProfile extends ConsumerWidget {
                 style: TextStyle(fontSize: 24.0),
               ),
             ])),
+            // },
+            // ),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -128,4 +140,3 @@ class UserProfile extends ConsumerWidget {
 // }
 
 // final pageProvider = StateProvider((ref) => 1);
-

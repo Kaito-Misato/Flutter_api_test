@@ -18,7 +18,6 @@ void main() {
 }
 
 // userProfile
-List userData = [];
 // final axisCounters = <int>[3, 4, 5, 6, 7];
 int selectAxis = 3;
 
@@ -41,6 +40,10 @@ final selectAxisProvider = StateProvider((ref) => 3);
 
 class Gridphoto extends ConsumerWidget {
   Object? get users => null;
+
+  List userData = [];
+
+  get length => null;
 
   @override
   Widget build(BuildContext context,
@@ -134,7 +137,7 @@ class Gridphoto extends ConsumerWidget {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          UserProfile(userData[index])));
+                                          UserProfile(userData, index)));
                             },
                             child: Widget_photoItem(
                                 userData[index][userTitles.Picture])),
