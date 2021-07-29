@@ -127,21 +127,18 @@ class Gridphoto extends ConsumerWidget {
                     if (index == userData.length) {
                       listIn();
                     }
-                    return AnimatedPositioned(
-                        child: GestureDetector(
-                            onTap: () {
-                              context.read(countProvider).state =
-                                  userTitles.Name;
+                    return GestureDetector(
+                        onTap: () {
+                          context.read(countProvider).state = userTitles.Name;
 
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          UserProfile(userData, index)));
-                            },
-                            child: Widget_photoItem(
-                                userData[index][userTitles.Picture])),
-                        duration: const Duration(seconds: 1));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      UserProfile(userData, index)));
+                        },
+                        child: Widget_photoItem(
+                            userData[index][userTitles.Picture]));
                   },
                 ),
               );

@@ -3,6 +3,9 @@
 
 // import 'dart:js';
 
+// import 'dart:ffi';
+// import 'dart:html';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_api_test/main.dart';
 // import 'package:flutter_api_test/network_request.dart';
@@ -30,8 +33,6 @@ class UserProfile extends ConsumerWidget {
   List profile;
   int index;
 
-  final controller = PageController();
-
   @override
   Widget build(BuildContext context,
       T Function<T>(ProviderBase<Object, T> provider) watch) {
@@ -44,84 +45,85 @@ class UserProfile extends ConsumerWidget {
     viewCount = viewCount.replaceAll('userTitles.', '');
     // Gridphoto userData = Gridphoto();
 
-    late dynamic userText = profile[index][count];
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text('User Profile'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            // PageView.builder(
-            //     itemCount: userData.length,
-            //     itemBuilder: (context, i) {
-            //       return
-            Container(
-                child: Column(children: [
-              CircleAvatar(
-                backgroundImage:
-                    NetworkImage(profile[index][userTitles.Picture]),
-                radius: 48,
-              ),
-              Text('$viewCount'),
-              Text(
-                '$userText',
-                style: TextStyle(fontSize: 24.0),
-              ),
-            ])),
-            // },
-            // ),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    context.read(countProvider).state = userTitles.Name;
-                  },
-                  icon: Icon(Icons.person_outlined),
-                ),
-                IconButton(
-                  onPressed: () {
-                    context.read(countProvider).state = userTitles.Birthday;
-                  },
-                  icon: Icon(Icons.calendar_today_outlined),
-                ),
-                IconButton(
-                  onPressed: () {
-                    context.read(countProvider).state = userTitles.Country;
-                  },
-                  icon: Icon(Icons.map_outlined),
-                ),
-                IconButton(
-                  onPressed: () {
-                    context.read(countProvider).state = userTitles.Phone;
-                  },
-                  icon: Icon(Icons.phone),
-                ),
-                IconButton(
-                  onPressed: () {
-                    context.read(countProvider).state = userTitles.Password;
-                  },
-                  icon: Icon(Icons.lock),
-                ),
-              ],
-            ),
-            // Container(
-            //   child: FloatingActionButton(
-            //     child: Icon(Icons.autorenew),
-            //     onPressed: () async {
-            //       await context.refresh(userStateFuture);
-            //       context.read(countProvider).state = userTitles.Name;
-            //     },
-            //   ),
-            // ),
-          ],
+        appBar: AppBar(
+          title: Text('User Profile'),
         ),
-      ),
-    );
+        body: Center(
+          child: Align(
+              alignment: Alignment.center,
+              child: PageView.builder(
+                  controller: PageController(initialPage: index),
+                  itemCount: userData.length,
+                  itemBuilder: (context, i) {
+                    late dynamic userText = profile[i][count];
+                    return Container(
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
+                      CircleAvatar(
+                        backgroundImage:
+                            NetworkImage(profile[i][userTitles.Picture]),
+                        radius: 48,
+                      ),
+                      Text('$viewCount'),
+                      Text(
+                        '$userText',
+                        style: TextStyle(fontSize: 24.0),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              context.read(countProvider).state =
+                                  userTitles.Name;
+                            },
+                            icon: Icon(Icons.person_outlined),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              context.read(countProvider).state =
+                                  userTitles.Birthday;
+                            },
+                            icon: Icon(Icons.calendar_today_outlined),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              context.read(countProvider).state =
+                                  userTitles.Country;
+                            },
+                            icon: Icon(Icons.map_outlined),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              context.read(countProvider).state =
+                                  userTitles.Phone;
+                            },
+                            icon: Icon(Icons.phone),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              context.read(countProvider).state =
+                                  userTitles.Password;
+                            },
+                            icon: Icon(Icons.lock),
+                          ),
+                        ],
+                      ),
+                    ]));
+                  })),
+        )
+
+        // Container(
+        //   child: FloatingActionButton(
+        //     child: Icon(Icons.autorenew),
+        //     onPressed: () async {
+        //       await context.refresh(userStateFuture);
+        //       context.read(countProvider).state = userTitles.Name;
+        //     },
+        //   ),
+        // ),
+        );
   }
 }
 // class LoadPicture {
