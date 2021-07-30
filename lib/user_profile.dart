@@ -7,7 +7,8 @@
 // import 'dart:html';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_api_test/main.dart';
+import 'package:flutter_api_test/grid_photo.dart';
+// import 'package:flutter_api_test/main.dart';
 // import 'package:flutter_api_test/network_request.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'main.dart';
@@ -19,7 +20,7 @@ int countPage = 1;
 // int countGrid = photos.length;
 
 // final photosProvider = ChangeNotifierProvider((ref) => photos);
-Gridphoto userData = Gridphoto();
+GridPhoto userData = GridPhoto();
 final countGridProvider = StateProvider((ref) => userData.length);
 // final photosGridProvider = StateProvider((ref) => photos);
 
