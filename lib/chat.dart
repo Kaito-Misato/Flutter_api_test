@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_api_test/chat_message.dart';
+import 'package:flutter_api_test/chat_view.dart';
 
 class Chat extends StatefulWidget {
   const Chat({Key? key}) : super(key: key);
@@ -10,50 +10,76 @@ class Chat extends StatefulWidget {
 }
 
 class _ChatState extends State<Chat> {
+  final myController = TextEditingController();
   List<ChatUsers> chatUsers = [
     ChatUsers(
         text: "Jane Russel",
         secondaryText: "Awesome Setup",
-        image: "images/userImage1.jpeg",
+        image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "Now"),
     ChatUsers(
         text: "Glady's Murphy",
         secondaryText: "That's Great",
-        image: "images/userImage2.jpeg",
+        image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "Yesterday"),
     ChatUsers(
         text: "Jorge Henry",
         secondaryText: "Hey where are you?",
-        image: "images/userImage3.jpeg",
+        image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "31 Mar"),
     ChatUsers(
         text: "Philip Fox",
         secondaryText: "Busy! Call me in 20 mins",
-        image: "images/userImage4.jpeg",
+        image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "28 Mar"),
     ChatUsers(
         text: "Debra Hawkins",
         secondaryText: "Thankyou, It's awesome",
-        image: "images/userImage5.jpeg",
+        image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "23 Mar"),
     ChatUsers(
         text: "Jacob Pena",
         secondaryText: "will update you in evening",
-        image: "images/userImage6.jpeg",
+        image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "17 Mar"),
     ChatUsers(
         text: "Andrey Jones",
         secondaryText: "Can you please share the file?",
-        image: "images/userImage7.jpeg",
+        image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "24 Feb"),
     ChatUsers(
         text: "John Wick",
         secondaryText: "How are you?",
-        image: "images/userImage8.jpeg",
+        image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "18 Feb"),
   ];
 
+  List<ChatUsers> searchResults = [];
+
+  void search(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        searchResults.clear();
+        searchResults.addAll(chatUsers);
+      });
+      return;
+    }
+    final List<ChatUsers> hitItems = chatUsers.where((element) {
+      return element.text.toLowerCase().contains(query.toLowerCase());
+    }).toList();
+
+    setState(() {
+      searchResults = hitItems;
+    });
+  }
+
   void _onrefresh() {}
+
+  @override
+  void dispose() {
+    myController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +133,8 @@ class _ChatState extends State<Chat> {
             Padding(
               padding: EdgeInsets.only(top: 16, left: 16, right: 16),
               child: TextField(
+                controller: myController,
+                onChanged: search,
                 decoration: InputDecoration(
                   hintText: "Search...",
                   hintStyle: TextStyle(color: Colors.grey.shade600),
@@ -127,17 +155,17 @@ class _ChatState extends State<Chat> {
             RefreshIndicator(
               onRefresh: () async {},
               child: ListView.builder(
-                itemCount: chatUsers.length,
+                itemCount: searchResults.length,
                 shrinkWrap: true,
                 padding: EdgeInsets.only(top: 16),
                 // physics: NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   return ConversationList(
-                    text: chatUsers[index].text,
-                    secondaryText: chatUsers[index].secondaryText,
-                    image: chatUsers[index].image,
-                    time: chatUsers[index].time,
-                    isMessageRead: (index == 0 || index == 3) ? true : false,
+                    text: searchResults[index].text,
+                    secondaryText: searchResults[index].secondaryText,
+                    image: searchResults[index].image,
+                    time: searchResults[index].time,
+                    isMessageRead: (index >= 0 && index <= 3) ? true : false,
                   );
                 },
               ),
@@ -146,6 +174,41 @@ class _ChatState extends State<Chat> {
         ),
       ),
     );
+  }
+}
+
+class HighlightedText extends StatelessWidget {
+  HighlightedText({
+    required this.wholeString,
+    required this.highlightedString,
+    this.defaultStyle = const TextStyle(color: Colors.black),
+    this.highlightStyle = const TextStyle(color: Colors.blue),
+  });
+
+  final String wholeString;
+  final String highlightedString;
+  final TextStyle defaultStyle;
+  final TextStyle highlightStyle;
+
+  int get _highlightStart {
+    return wholeString.toLowerCase().indexOf(highlightedString.toLowerCase());
+  }
+
+  int get _highlightEnd => _highlightStart + highlightedString.length;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_highlightStart == -1) {
+      return Text(wholeString, style: defaultStyle);
+    }
+    return RichText(
+        text: TextSpan(style: defaultStyle, children: [
+      TextSpan(text: wholeString.substring(0, _highlightStart)),
+      TextSpan(
+        text: wholeString.substring(_highlightStart, _highlightEnd),
+        style: highlightStyle,
+      ),
+    ]));
   }
 }
 
@@ -179,6 +242,7 @@ class ConversationList extends StatefulWidget {
 }
 
 class _ConversationListState extends State<ConversationList> {
+  _ChatState myController = _ChatState();
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -195,8 +259,7 @@ class _ConversationListState extends State<ConversationList> {
               child: Row(
                 children: <Widget>[
                   CircleAvatar(
-                    backgroundImage: NetworkImage(
-                        "https://randomuser.me/api/portraits/men/6.jpg"),
+                    backgroundImage: NetworkImage(widget.image),
                     maxRadius: 30,
                   ),
                   SizedBox(
@@ -208,10 +271,9 @@ class _ConversationListState extends State<ConversationList> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            widget.text,
-                            style: TextStyle(fontSize: 16),
-                          ),
+                          HighlightedText(
+                              wholeString: widget.text,
+                              highlightedString: myController.toString()),
                           SizedBox(
                             height: 6,
                           ),

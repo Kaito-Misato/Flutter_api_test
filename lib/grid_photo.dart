@@ -120,7 +120,7 @@ class GridPhoto extends ConsumerWidget {
               ),
               onRefresh: () async {
                 await context.refresh(userStateFuture);
-                userData = [];
+                userData.clear();
                 listIn();
               },
             ),

@@ -7,10 +7,6 @@ final selectIndexProvider = StateProvider((ref) => 0);
 
 final Grids = [
   GridPhoto(),
-  GridPhoto(),
-  GridPhoto(),
-  Chat(),
-  Chat(),
   Chat(),
 ];
 
@@ -37,24 +33,8 @@ class TabView extends ConsumerWidget {
             label: "Grid1",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.photo_album_outlined),
-            label: "Grid2",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.photo_album_outlined),
-            label: "Grid3",
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.message),
             label: "Chats",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group_work),
-            label: "Channels",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_box),
-            label: "Profile",
           ),
         ],
         currentIndex: selectIndex,
