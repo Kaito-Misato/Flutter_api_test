@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_api_test/chat_view.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+
+final queryState = StateProvider((_) => '');
 
 class Chat extends StatefulWidget {
   const Chat({Key? key}) : super(key: key);
@@ -9,8 +13,9 @@ class Chat extends StatefulWidget {
   _ChatState createState() => _ChatState();
 }
 
+TextEditingController myController = TextEditingController();
+
 class _ChatState extends State<Chat> {
-  final myController = TextEditingController();
   List<ChatUsers> chatUsers = [
     ChatUsers(
         text: "Jane Russel",
@@ -52,6 +57,11 @@ class _ChatState extends State<Chat> {
         secondaryText: "How are you?",
         image: "https://randomuser.me/api/portraits/men/6.jpg",
         time: "18 Feb"),
+    // ChatUsers(
+    //     text: "unknown",
+    //     secondaryText: "removed message",
+    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
+    //     time: "1 jan"),
   ];
 
   List<ChatUsers> searchResults = [];
@@ -75,11 +85,11 @@ class _ChatState extends State<Chat> {
 
   void _onrefresh() {}
 
-  @override
-  void dispose() {
-    myController.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   myController.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -160,12 +170,12 @@ class _ChatState extends State<Chat> {
                 padding: EdgeInsets.only(top: 16),
                 // physics: NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
-                  return ConversationList(
+                  return _ConversationListState(
                     text: searchResults[index].text,
                     secondaryText: searchResults[index].secondaryText,
                     image: searchResults[index].image,
                     time: searchResults[index].time,
-                    isMessageRead: (index >= 0 && index <= 3) ? true : false,
+                    isMessageRead: (index >= 0 && index <= 1) ? true : false,
                   );
                 },
               ),
@@ -202,13 +212,25 @@ class HighlightedText extends StatelessWidget {
       return Text(wholeString, style: defaultStyle);
     }
     return RichText(
-        text: TextSpan(style: defaultStyle, children: [
-      TextSpan(text: wholeString.substring(0, _highlightStart)),
-      TextSpan(
-        text: wholeString.substring(_highlightStart, _highlightEnd),
-        style: highlightStyle,
+      text: TextSpan(
+        style: defaultStyle,
+        children: [
+          TextSpan(
+            text: wholeString.substring(
+              0,
+              _highlightStart,
+            ),
+          ),
+          TextSpan(
+            text: wholeString.substring(_highlightStart, _highlightEnd),
+            style: highlightStyle,
+          ),
+          TextSpan(
+            text: wholeString.substring(_highlightEnd),
+          ),
+        ],
       ),
-    ]));
+    );
   }
 }
 
@@ -225,26 +247,41 @@ class ChatUsers {
   });
 }
 
-class ConversationList extends StatefulWidget {
+// class ConversationList extends StatefulWidget {
+//   String text;
+//   String secondaryText;
+//   String image;
+//   String time;
+//   bool isMessageRead;
+//   ConversationList(
+//       {required this.text,
+//       required this.secondaryText,
+//       required this.image,
+//       required this.time,
+//       required this.isMessageRead});
+//   @override
+//   _ConversationListState createState() => _ConversationListState();
+// }
+
+class _ConversationListState extends HookWidget {
   String text;
   String secondaryText;
   String image;
   String time;
   bool isMessageRead;
-  ConversationList(
+  _ConversationListState(
       {required this.text,
       required this.secondaryText,
       required this.image,
       required this.time,
       required this.isMessageRead});
-  @override
-  _ConversationListState createState() => _ConversationListState();
-}
 
-class _ConversationListState extends State<ConversationList> {
-  _ChatState myController = _ChatState();
   @override
   Widget build(BuildContext context) {
+    // _ChatState myController = _ChatState();
+
+    // final useQueryState = useProvider(queryState);
+
     return GestureDetector(
       onTap: () {
         Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -259,7 +296,7 @@ class _ConversationListState extends State<ConversationList> {
               child: Row(
                 children: <Widget>[
                   CircleAvatar(
-                    backgroundImage: NetworkImage(widget.image),
+                    backgroundImage: NetworkImage(image),
                     maxRadius: 30,
                   ),
                   SizedBox(
@@ -272,17 +309,18 @@ class _ConversationListState extends State<ConversationList> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           HighlightedText(
-                              wholeString: widget.text,
-                              highlightedString: myController.toString()),
+                            wholeString: text,
+                            highlightedString: myController.text,
+                          ),
                           SizedBox(
                             height: 6,
                           ),
                           Text(
-                            widget.secondaryText,
+                            secondaryText,
                             style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey.shade600,
-                                fontWeight: widget.isMessageRead
+                                fontWeight: isMessageRead
                                     ? FontWeight.bold
                                     : FontWeight.normal),
                           ),
@@ -294,12 +332,11 @@ class _ConversationListState extends State<ConversationList> {
               ),
             ),
             Text(
-              widget.time,
+              time,
               style: TextStyle(
                   fontSize: 12,
-                  fontWeight: widget.isMessageRead
-                      ? FontWeight.bold
-                      : FontWeight.normal),
+                  fontWeight:
+                      isMessageRead ? FontWeight.bold : FontWeight.normal),
             ),
           ],
         ),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -17,16 +19,39 @@ class ChatView extends StatefulWidget {
 // ChatMessage messages = ChatMessage();
 
 class _ChatViewState extends State<ChatView> {
+  TextEditingController inputMessage = TextEditingController();
+
+  String Echolalia = '';
+
   List<ChatMessage> messages = [
-    ChatMessage(messageContent: "Hello, Will", messageType: "receiver"),
-    ChatMessage(messageContent: "How have you been?", messageType: "receiver"),
-    ChatMessage(
-        messageContent: "Hey Kriss, I am doing fine dude. wbu?",
-        messageType: "sender"),
-    ChatMessage(messageContent: "ehhhh, doing OK.", messageType: "receiver"),
-    ChatMessage(
-        messageContent: "Is there any thing wrong?", messageType: "sender"),
+    // ChatMessage(messageContent: "Hello, Will", messageType: "receiver"),
+    // ChatMessage(messageContent: "How have you been?", messageType: "receiver"),
+    // ChatMessage(
+    //     messageContent: "Hey Kriss, I am doing fine dude. wbu?",
+    //     messageType: "sender"),
+    // ChatMessage(messageContent: "ehhhh, doing OK.", messageType: "receiver"),
+    // ChatMessage(
+    //     messageContent: "Is there any thing wrong?", messageType: "sender"),
   ];
+
+  sendMessage() {
+    setState(() {
+      Echolalia = inputMessage.text;
+      messages.add(
+        ChatMessage(messageContent: inputMessage.text, messageType: "sender"),
+      );
+      inputMessage.clear();
+    });
+  }
+
+  receiveMessage() {
+    setState(() {
+      messages.add(
+        ChatMessage(messageContent: Echolalia, messageType: "receiver"),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,7 +119,7 @@ class _ChatViewState extends State<ChatView> {
           itemCount: messages.length,
           shrinkWrap: true,
           padding: EdgeInsets.only(top: 10, bottom: 10),
-          physics: NeverScrollableScrollPhysics(),
+          // physics: NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
             return Container(
               padding:
@@ -148,6 +173,7 @@ class _ChatViewState extends State<ChatView> {
                 SizedBox(width: 15),
                 Expanded(
                   child: TextField(
+                    controller: inputMessage,
                     decoration: InputDecoration(
                         hintText: "Write message...",
                         hintStyle: TextStyle(color: Colors.black54),
@@ -158,7 +184,24 @@ class _ChatViewState extends State<ChatView> {
                   width: 15,
                 ),
                 FloatingActionButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    sendMessage();
+                    RegExp regExp = RegExp(r'([0-9]{1,2})');
+                    final results = regExp
+                        .allMatches(Echolalia)
+                        .map((match) => match.group(0))
+                        .toList();
+                    if (results.length != 0) {
+                      Future.delayed(Duration(
+                          seconds: int.parse(
+                        results.first ?? '1',
+                      ))).then((_) => receiveMessage());
+                    } else {
+                      Future.delayed(
+                        Duration(seconds: 1),
+                      ).then((_) => receiveMessage());
+                    }
+                  },
                   child: Icon(
                     Icons.send,
                     color: Colors.white,
