@@ -1,10 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_api_test/chat_view.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-
-final queryState = StateProvider((_) => '');
 
 class Chat extends StatefulWidget {
   const Chat({Key? key}) : super(key: key);
@@ -65,6 +62,12 @@ class _ChatState extends State<Chat> {
   ];
 
   List<ChatUsers> searchResults = [];
+
+  void initConversationList() {
+    setState(() {
+      searchResults.addAll(chatUsers);
+    });
+  }
 
   void search(String query) {
     if (query.isEmpty) {
