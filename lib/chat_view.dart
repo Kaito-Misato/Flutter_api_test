@@ -59,12 +59,12 @@ class _ChatViewState extends State<ChatView> {
 
   sendMessage() {
     setState(() {
+      closeCustomMenu();
       echolalia = inputMessage.text;
       messages.add(
         ChatMessage(messageContent: inputMessage.text, messageType: "sender"),
       );
       inputMessage.clear();
-      closeCustomMenu();
     });
   }
 

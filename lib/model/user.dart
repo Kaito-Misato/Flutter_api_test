@@ -1,5 +1,5 @@
-// import 'dart:ui';
-// import 'dart:convert';
+import 'dart:convert';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 // import 'package:flutter/foundation.dart';
 // import 'package:freezed/builder.dart';
@@ -33,18 +33,40 @@ class Password {
   }
 }
 
+class Position {
+  late String latitude;
+  late String longitude;
+  Position({required this.latitude, required this.longitude});
+
+  Position.fromJson(Map json) {
+    latitude = json['latitude'];
+    longitude = json['longitude'];
+  }
+  Map toJson() {
+    final Map data = new Map();
+    data['latitude'] = this.latitude;
+    data['longitude'] = this.longitude;
+    return data;
+  }
+}
+
 class Address {
   late String country;
+  late Position coordinates;
+
   Address({
     required this.country,
+    required this.coordinates,
   });
 
   Address.fromJson(Map json) {
     country = json['country'];
+    coordinates = Position.fromJson(json['coordinates']);
   }
   Map toJson() {
     final Map data = new Map();
     data['country'] = this.country;
+    data['coordinates'] = this.coordinates;
     return data;
   }
 }

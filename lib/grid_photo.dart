@@ -83,7 +83,11 @@ class GridPhoto extends ConsumerWidget {
                 userTitles.Country: value[i].location?.country ?? 'None',
                 userTitles.Phone: value[i].phone ?? 'None',
                 userTitles.Password: value[i].login?.password ?? 'None',
-                userTitles.Picture: value[i].picture?.large ?? 'None'
+                userTitles.Picture: value[i].picture?.large ?? 'None',
+                userTitles.Latitude:
+                    value[i].location?.coordinates.latitude ?? 'None',
+                userTitles.Longitude:
+                    value[i].location?.coordinates.longitude ?? 'None',
               };
               userData.add(userProfile);
             }

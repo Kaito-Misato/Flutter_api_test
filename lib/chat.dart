@@ -63,10 +63,10 @@ class _ChatState extends State<Chat> {
 
   List<ChatUsers> searchResults = [];
 
-  void initConversationList() {
-    setState(() {
-      searchResults.addAll(chatUsers);
-    });
+  @override
+  void initState() {
+    searchResults.addAll(chatUsers);
+    super.initState();
   }
 
   void search(String query) {
@@ -77,9 +77,12 @@ class _ChatState extends State<Chat> {
       });
       return;
     }
+
     final List<ChatUsers> hitItems = chatUsers.where((element) {
       return element.text.toLowerCase().contains(query.toLowerCase());
     }).toList();
+
+    searchResults.clear();
 
     setState(() {
       searchResults = hitItems;
