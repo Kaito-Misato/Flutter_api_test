@@ -32,17 +32,11 @@ class _ChatViewState extends State<ChatView> {
   String echolalia = '';
   String echolaliaImage = '';
   bool onTapCustomMenu = false;
-
-  List<ChatMessage> messages = [
-    // ChatMessage(messageContent: "Hello, Will", messageType: "receiver"),
-    // ChatMessage(messageContent: "How have you been?", messageType: "receiver"),
-    // ChatMessage(
-    //     messageContent: "Hey Kriss, I am doing fine dude. wbu?",
-    //     messageType: "sender"),
-    // ChatMessage(messageContent: "ehhhh, doing OK.", messageType: "receiver"),
-    // ChatMessage(
-    //     messageContent: "Is there any thing wrong?", messageType: "sender"),
-  ];
+  bool messageContentCheck = true;
+  List<ChatMessage> messages = [];
+  List<File> _images = [];
+  File? _image;
+  final picker = ImagePicker();
 
   static Future get localPath async {
     final directory = await getApplicationDocumentsDirectory();
@@ -57,18 +51,18 @@ class _ChatViewState extends State<ChatView> {
     return savedFile;
   }
 
-  sendMessage() {
-    setState(() {
-      closeCustomMenu();
-      echolalia = inputMessage.text;
-      messages.add(
-        ChatMessage(messageContent: inputMessage.text, messageType: "sender"),
-      );
-      inputMessage.clear();
-    });
-  }
+  // sendMessage() {
+  //   setState(() {
+  //     closeCustomMenu();
+  //     echolalia = inputMessage.text;
+  //     messages.add(
+  //       ChatMessage(messageContent: inputMessage.text, messageType: "sender"),
+  //     );
+  //     inputMessage.clear();
+  //   });
+  // }
 
-  sendImage() {
+  sendMessage() {
     setState(() {
       echolaliaImage = inputMessage.text;
       messages.add(
@@ -80,6 +74,7 @@ class _ChatViewState extends State<ChatView> {
       _image = null;
       inputMessage.clear();
       closeCustomMenu();
+      messageContentCheck = true;
     });
   }
 
@@ -114,9 +109,17 @@ class _ChatViewState extends State<ChatView> {
     });
   }
 
-  List<File> _images = [];
-  File? _image;
-  final picker = ImagePicker();
+  void chatMessageInput(String message) {
+    if (message.isEmpty) {
+      setState(() {
+        messageContentCheck = true;
+      });
+    } else {
+      setState(() {
+        messageContentCheck = false;
+      });
+    }
+  }
 
   Future getImageFromCamera() async {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
@@ -280,6 +283,7 @@ class _ChatViewState extends State<ChatView> {
                       Expanded(
                         child: TextField(
                           controller: inputMessage,
+                          onChanged: chatMessageInput,
                           decoration: InputDecoration(
                               hintText: "Write message...",
                               hintStyle: TextStyle(color: Colors.black54),
@@ -290,28 +294,30 @@ class _ChatViewState extends State<ChatView> {
                         width: 15,
                       ),
                       FloatingActionButton(
-                        onPressed: () {
-                          // messages.last.messageType == "sender image"
-                          //     ?
-                          sendImage();
-                          //     :
-                          // sendMessage();
-                          RegExp regExp = RegExp(r'([0-9]{1,2})');
-                          final results = regExp
-                              .allMatches(echolalia)
-                              .map((match) => match.group(0))
-                              .toList();
-                          if (results.length != 0) {
-                            Future.delayed(Duration(
-                                seconds: int.parse(
-                              results.first ?? '1',
-                            ))).then((_) => receiveMessage());
-                          } else {
-                            Future.delayed(
-                              Duration(seconds: 1),
-                            ).then((_) => receiveMessage());
-                          }
-                        },
+                        onPressed: messageContentCheck
+                            ? null
+                            : () {
+                                // messages.last.messageType == "sender image"
+                                //     ?
+                                sendMessage();
+                                //     :
+                                // sendMessage();
+                                RegExp regExp = RegExp(r'([0-9]{1,2})');
+                                final results = regExp
+                                    .allMatches(echolalia)
+                                    .map((match) => match.group(0))
+                                    .toList();
+                                if (results.length != 0) {
+                                  Future.delayed(Duration(
+                                      seconds: int.parse(
+                                    results.first ?? '1',
+                                  ))).then((_) => receiveMessage());
+                                } else {
+                                  Future.delayed(
+                                    Duration(seconds: 1),
+                                  ).then((_) => receiveMessage());
+                                }
+                              },
                         child: Icon(
                           Icons.send,
                           color: Colors.white,

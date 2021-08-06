@@ -134,58 +134,66 @@ class UserProfile extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      Container(
-                        width: 300,
-                        height: 300,
-                        child: FlutterMap(
-                          options: MapOptions(
-                            center: LatLng(
-                              double.parse(profile[i][userTitles.Latitude]),
-                              double.parse(profile[i][userTitles.Longitude]),
-                            ),
-                            zoom: 14.0,
-                          ),
-                          layers: [
-                            TileLayerOptions(
-                              urlTemplate:
-                                  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              subdomains: ['a', 'b', 'c'],
-                            ),
-                            MarkerLayerOptions(
-                              markers: [
-                                Marker(
-                                  width: 50,
-                                  height: 50,
-                                  point: LatLng(
-                                    double.parse(
-                                        profile[i][userTitles.Latitude]),
-                                    double.parse(
-                                        profile[i][userTitles.Longitude]),
+                      Padding(
+                          padding: EdgeInsets.all(50),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 300,
+                                height: 300,
+                                child: FlutterMap(
+                                  options: MapOptions(
+                                    center: LatLng(
+                                      double.parse(
+                                          profile[i][userTitles.Latitude]),
+                                      double.parse(
+                                          profile[i][userTitles.Longitude]),
+                                    ),
+                                    zoom: 5.0,
                                   ),
-                                  builder: (ctx) => Icon(
-                                    Icons.location_pin,
-                                    color: Colors.red,
-                                  ),
+                                  layers: [
+                                    TileLayerOptions(
+                                      urlTemplate:
+                                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      subdomains: ['a', 'b', 'c'],
+                                    ),
+                                    MarkerLayerOptions(
+                                      markers: [
+                                        Marker(
+                                          width: 50,
+                                          height: 50,
+                                          point: LatLng(
+                                            double.parse(profile[i]
+                                                [userTitles.Latitude]),
+                                            double.parse(profile[i]
+                                                [userTitles.Longitude]),
+                                          ),
+                                          builder: (ctx) => Icon(
+                                            Icons.location_pin,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          profile[i][userTitles.Latitude],
-                          textAlign: TextAlign.right,
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          profile[i][userTitles.Longitude],
-                          textAlign: TextAlign.right,
-                        ),
-                      ),
+                              ),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  profile[i][userTitles.Latitude],
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  profile[i][userTitles.Longitude],
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                            ],
+                          )),
                     ],
                   );
                 })),
