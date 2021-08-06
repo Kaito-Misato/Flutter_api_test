@@ -1,17 +1,10 @@
-// import 'dart:ffi';
-// import 'dart:js';
-
-// import 'dart:js';
-
-// import 'dart:ffi';
-// import 'dart:html';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_api_test/grid_photo.dart';
 
 // import 'package:flutter_api_test/main.dart';
 // import 'package:flutter_api_test/network_request.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 
 // import 'main.dart';
 import 'model/user.dart';
@@ -26,6 +19,8 @@ int countPage = 1;
 // final photosProvider = ChangeNotifierProvider((ref) => photos);
 GridPhoto userData = GridPhoto();
 final countGridProvider = StateProvider((ref) => userData.length);
+// final latitudeProvider = StateProvider((ref) => 0.0);
+// final longitudeProvider = StateProvider((ref) => 0.0);
 // final photosGridProvider = StateProvider((ref) => photos);
 
 enum userTitles {
@@ -43,12 +38,16 @@ final countProvider = StateProvider((ref) => userTitles.Name);
 
 // ignore: must_be_immutable
 class UserProfile extends ConsumerWidget {
+  MapView getLocation = MapView();
+
   Object? get users => null;
 
   UserProfile(this.profile, this.index);
 
   List profile;
   int index;
+
+  // String _location = 'no data';
 
   @override
   Widget build(BuildContext context,
@@ -58,6 +57,8 @@ class UserProfile extends ConsumerWidget {
 
     // final int num = 0;
     final count = watch(countProvider).state;
+    // final countLatitude = watch(latitudeProvider).state;
+    // final countLongitude = watch(longitudeProvider).state;
     String viewCount = count.toString();
     viewCount = viewCount.replaceAll('userTitles.', '');
     // Gridphoto userData = Gridphoto();
@@ -135,49 +136,12 @@ class UserProfile extends ConsumerWidget {
                         ),
                       ),
                       Padding(
-                          padding: EdgeInsets.all(50),
+                          padding: EdgeInsets.all(30),
                           child: Column(
                             children: [
-                              Container(
-                                width: 300,
-                                height: 300,
-                                child: FlutterMap(
-                                  options: MapOptions(
-                                    center: LatLng(
-                                      double.parse(
-                                          profile[i][userTitles.Latitude]),
-                                      double.parse(
-                                          profile[i][userTitles.Longitude]),
-                                    ),
-                                    zoom: 5.0,
-                                  ),
-                                  layers: [
-                                    TileLayerOptions(
-                                      urlTemplate:
-                                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                      subdomains: ['a', 'b', 'c'],
-                                    ),
-                                    MarkerLayerOptions(
-                                      markers: [
-                                        Marker(
-                                          width: 50,
-                                          height: 50,
-                                          point: LatLng(
-                                            double.parse(profile[i]
-                                                [userTitles.Latitude]),
-                                            double.parse(profile[i]
-                                                [userTitles.Longitude]),
-                                          ),
-                                          builder: (ctx) => Icon(
-                                            Icons.location_pin,
-                                            color: Colors.red,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              MapView(
+                                  latitude: profile[i][userTitles.Latitude],
+                                  longitude: profile[i][userTitles.Longitude]),
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: Text(
@@ -207,6 +171,128 @@ class UserProfile extends ConsumerWidget {
       //     },
       //   ),
       // ),
+    );
+  }
+}
+
+class MapView extends StatefulWidget {
+  // const MapView({ Key? key,}) : super(key: key);
+  final String? latitude;
+  final String? longitude;
+  MapView({this.latitude, this.longitude});
+  @override
+  _MapViewState createState() =>
+      _MapViewState(latitude: latitude, longitude: longitude);
+}
+
+class _MapViewState extends State<MapView> with TickerProviderStateMixin {
+  final String? latitude;
+  final String? longitude;
+  _MapViewState({this.latitude, this.longitude});
+
+  double current_latitude = 0.0;
+  double current_longitude = 0.0;
+
+  late LatLng current = LatLng(current_latitude, current_longitude);
+  MapController _mapController = MapController();
+
+  Future<void> getLocation() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    current_latitude = position.latitude;
+    current_longitude = position.longitude;
+    current = LatLng(current_latitude, current_longitude);
+    // _mapController.move(LatLng(26.1691567, 127.6556057), 3.0);
+  }
+
+  void _animatedMapMove(LatLng destLocation) {
+    final _latTween = Tween<double>(
+        begin: _mapController.center.latitude, end: destLocation.latitude);
+    final _lngTween = Tween<double>(
+        begin: _mapController.center.longitude, end: destLocation.longitude);
+    var controller =
+        AnimationController(duration: const Duration(seconds: 5), vsync: this);
+    Animation<double> animation =
+        CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+    controller.addListener(() {
+      _mapController.move(
+        LatLng(
+          _latTween.evaluate(animation),
+          _lngTween.evaluate(animation),
+        ),
+        5.0,
+      );
+    });
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        controller.dispose();
+      } else if (status == AnimationStatus.dismissed) {
+        controller.dispose();
+      }
+    });
+    controller.forward();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 300,
+          height: 300,
+          child: FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              center: LatLng(
+                double.parse(latitude ?? '0.0'),
+                double.parse(longitude ?? '0.0'),
+              ),
+              zoom: 5.0,
+            ),
+            layers: [
+              TileLayerOptions(
+                urlTemplate:
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: ['a', 'b', 'c'],
+              ),
+              MarkerLayerOptions(
+                markers: [
+                  Marker(
+                    width: 50,
+                    height: 50,
+                    point: LatLng(
+                      double.parse(latitude ?? '0.0'),
+                      double.parse(longitude ?? '0.0'),
+                    ),
+                    builder: (ctx) => Icon(
+                      Icons.location_pin,
+                      color: Colors.red,
+                    ),
+                  ),
+                  Marker(
+                    width: 50,
+                    height: 50,
+                    point: current,
+                    builder: (ctx) => Icon(
+                      Icons.location_pin,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          onPressed: () async {
+            await getLocation();
+            _animatedMapMove(current);
+          },
+          icon: Icon(
+            Icons.my_location,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -33,12 +33,12 @@ class Password {
   }
 }
 
-class Position {
+class Coordinate {
   late String latitude;
   late String longitude;
-  Position({required this.latitude, required this.longitude});
+  Coordinate({required this.latitude, required this.longitude});
 
-  Position.fromJson(Map json) {
+  Coordinate.fromJson(Map json) {
     latitude = json['latitude'];
     longitude = json['longitude'];
   }
@@ -52,7 +52,7 @@ class Position {
 
 class Address {
   late String country;
-  late Position coordinates;
+  late Coordinate coordinates;
 
   Address({
     required this.country,
@@ -61,7 +61,7 @@ class Address {
 
   Address.fromJson(Map json) {
     country = json['country'];
-    coordinates = Position.fromJson(json['coordinates']);
+    coordinates = Coordinate.fromJson(json['coordinates']);
   }
   Map toJson() {
     final Map data = new Map();
