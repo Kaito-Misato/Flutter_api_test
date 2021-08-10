@@ -29,7 +29,7 @@ class _ChatViewState extends State<ChatView> {
   TextEditingController inputMessage = TextEditingController();
   // String
 
-  String echolalia = '';
+  String echolaliaMessage = '';
   String echolaliaImage = '';
   bool onTapCustomMenu = false;
   bool messageContentCheck = true;
@@ -62,9 +62,28 @@ class _ChatViewState extends State<ChatView> {
   //   });
   // }
 
+  sendImage() {
+    setState(() {
+      echolaliaMessage = inputMessage.text;
+      for (int index = 0; index < _images.length; index++) {
+        messages.add(
+          ChatMessage(
+              messageContent: inputMessage.text,
+              messageType: "sender",
+              imageContent: _images[index]),
+        );
+      }
+      _images.clear();
+      _image = null;
+      inputMessage.clear();
+      closeCustomMenu();
+      messageContentCheck = true;
+    });
+  }
+
   sendMessage() {
     setState(() {
-      echolaliaImage = inputMessage.text;
+      echolaliaMessage = inputMessage.text;
       messages.add(
         ChatMessage(
             messageContent: inputMessage.text,
@@ -81,7 +100,7 @@ class _ChatViewState extends State<ChatView> {
   receiveMessage() {
     setState(() {
       messages.add(
-        ChatMessage(messageContent: echolalia, messageType: "receiver"),
+        ChatMessage(messageContent: echolaliaMessage, messageType: "receiver"),
       );
     });
   }
@@ -131,19 +150,24 @@ class _ChatViewState extends State<ChatView> {
         _image = File(pickedFile.path);
         _images.add(File(pickedFile.path));
       }
+      messageContentCheck = false;
     });
   }
 
   Future getImageFromGallery() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    // final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickMultiImage();
 
     setState(() {
       if (pickedFile == null) {
         return null;
       } else {
-        _image = File(pickedFile.path);
-        _images.add(File(pickedFile.path));
+        _image = File(pickedFile.first.path);
+        for (int index = 0; index < pickedFile.length; index++) {
+          _images.add(File(pickedFile[index].path));
+        }
       }
+      messageContentCheck = false;
     });
   }
 
@@ -297,14 +321,19 @@ class _ChatViewState extends State<ChatView> {
                         onPressed: messageContentCheck
                             ? null
                             : () {
+                                if (_images.isEmpty) {
+                                  sendMessage();
+                                } else {
+                                  sendImage();
+                                }
                                 // messages.last.messageType == "sender image"
                                 //     ?
-                                sendMessage();
+
                                 //     :
                                 // sendMessage();
                                 RegExp regExp = RegExp(r'([0-9]{1,2})');
                                 final results = regExp
-                                    .allMatches(echolalia)
+                                    .allMatches(echolaliaMessage)
                                     .map((match) => match.group(0))
                                     .toList();
                                 if (results.length != 0) {
@@ -312,6 +341,8 @@ class _ChatViewState extends State<ChatView> {
                                       seconds: int.parse(
                                     results.first ?? '1',
                                   ))).then((_) => receiveMessage());
+                                } else if (echolaliaMessage.isEmpty) {
+                                  return;
                                 } else {
                                   Future.delayed(
                                     Duration(seconds: 1),
@@ -352,10 +383,16 @@ class _ChatViewState extends State<ChatView> {
                         )
                       : SizedBox.shrink(),
                   _image != null
-                      ? Image.file(
-                          _image!,
-                          width: 80,
-                          height: 80,
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            for (int i = 0; i < _images.length; i++)
+                              Image.file(
+                                _images[i],
+                                width: 80,
+                                height: 80,
+                              ),
+                          ],
                         )
                       : Container(),
                 ],

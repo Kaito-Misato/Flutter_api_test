@@ -67,100 +67,112 @@ class UserProfile extends ConsumerWidget {
       appBar: AppBar(
         title: Text('User Profile'),
       ),
-      body: Center(
-        child: Align(
+      body: SingleChildScrollView(
+        child: Center(
+          child: Align(
             alignment: Alignment.bottomCenter,
-            child: PageView.builder(
-                controller: PageController(initialPage: index),
-                itemCount: userData.length,
-                itemBuilder: (context, i) {
-                  late dynamic userText = profile[i][count];
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircleAvatar(
-                              backgroundImage:
-                                  NetworkImage(profile[i][userTitles.Picture]),
-                              radius: 48,
-                            ),
-                            Text('$viewCount'),
-                            Text(
-                              '$userText',
-                              style: TextStyle(fontSize: 24.0),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    context.read(countProvider).state =
-                                        userTitles.Name;
-                                  },
-                                  icon: Icon(Icons.person_outlined),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    context.read(countProvider).state =
-                                        userTitles.Birthday;
-                                  },
-                                  icon: Icon(Icons.calendar_today_outlined),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    context.read(countProvider).state =
-                                        userTitles.Country;
-                                  },
-                                  icon: Icon(Icons.map_outlined),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    context.read(countProvider).state =
-                                        userTitles.Phone;
-                                  },
-                                  icon: Icon(Icons.phone),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    context.read(countProvider).state =
-                                        userTitles.Password;
-                                  },
-                                  icon: Icon(Icons.lock),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                          padding: EdgeInsets.all(30),
+            child: Container(
+              height: MediaQuery.of(context).size.height + 100,
+              child: PageView.builder(
+                  controller: PageController(initialPage: index),
+                  itemCount: userData.length,
+                  itemBuilder: (context, i) {
+                    late dynamic userText = profile[i][count];
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              MapView(
-                                  latitude: profile[i][userTitles.Latitude],
-                                  longitude: profile[i][userTitles.Longitude]),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  profile[i][userTitles.Latitude],
-                                  textAlign: TextAlign.right,
-                                ),
+                              CircleAvatar(
+                                backgroundImage: NetworkImage(
+                                    profile[i][userTitles.Picture]),
+                                radius: 48,
                               ),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  profile[i][userTitles.Longitude],
-                                  textAlign: TextAlign.right,
-                                ),
+                              Text('$viewCount'),
+                              Text(
+                                '$userText',
+                                style: TextStyle(fontSize: 24.0),
                               ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      context.read(countProvider).state =
+                                          userTitles.Name;
+                                    },
+                                    icon: Icon(Icons.person_outlined),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      context.read(countProvider).state =
+                                          userTitles.Birthday;
+                                    },
+                                    icon: Icon(Icons.calendar_today_outlined),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      context.read(countProvider).state =
+                                          userTitles.Country;
+                                    },
+                                    icon: Icon(Icons.map_outlined),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      context.read(countProvider).state =
+                                          userTitles.Phone;
+                                    },
+                                    icon: Icon(Icons.phone),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      context.read(countProvider).state =
+                                          userTitles.Password;
+                                    },
+                                    icon: Icon(Icons.lock),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: EdgeInsets.all(10),
+                                child: Column(
+                                  children: [
+                                    MapView(
+                                      latitude: profile[i][userTitles.Latitude],
+                                      longitude: profile[i]
+                                          [userTitles.Longitude],
+                                    ),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Text(
+                                        profile[i][userTitles.Latitude],
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Text(
+                                        profile[i][userTitles.Longitude],
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
                             ],
-                          )),
-                    ],
-                  );
-                })),
+                          ),
+                        ),
+                        // Padding(
+                        //   padding: EdgeInsets.all(30),
+                        // ),
+                      ],
+                    );
+                  }),
+            ),
+          ),
+        ),
       ),
       // Container(
       //   child: FloatingActionButton(
@@ -238,8 +250,8 @@ class _MapViewState extends State<MapView> with TickerProviderStateMixin {
     return Column(
       children: [
         Container(
-          width: 300,
-          height: 300,
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.width,
           child: FlutterMap(
             mapController: _mapController,
             options: MapOptions(
