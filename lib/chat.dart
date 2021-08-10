@@ -131,14 +131,14 @@ class _ChatState extends State<Chat> {
                             color: Colors.pink,
                             size: 20,
                           ),
-                          SizedBox(
-                            width: 2,
-                          ),
-                          Text(
-                            "Add New",
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold),
-                          ),
+                          // SizedBox(
+                          //   width: 2,
+                          // ),
+                          // Text(
+                          //   "Add New",
+                          //   style: TextStyle(
+                          //       fontSize: 14, fontWeight: FontWeight.bold),
+                          // ),
                         ],
                       ),
                     )

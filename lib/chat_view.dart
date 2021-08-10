@@ -3,17 +3,54 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
 class ChatMessage {
-  String messageContent;
-  String messageType;
+  int id;
+  String? messageContent;
   File? imageContent;
-  ChatMessage(
-      {required this.messageContent,
-      required this.messageType,
-      this.imageContent});
+  String messageType;
+  String contentType;
+
+  ChatMessage({
+    required this.id,
+    this.messageContent,
+    this.imageContent,
+    required this.messageType,
+    required this.contentType,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'messageContent': messageContent,
+      'imageContent': imageContent,
+      'messageType': messageType,
+      'contentType': contentType,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'ChatMessage{id: $id, messageContent: $messageContent, imagecontent: $imageContent, messageContent: $messageContent, contentType: $contentType,}';
+  }
+
+  static Future<Database> get database async {
+    final Future<Database> _database = openDatabase(
+      join(await getDatabasesPath(), 'chatdata.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          'CREATE TABLE chat(id INTEGER PRIMARY KEY AUTOINCREMENT, messageContent TEXT, imageContent TEXT, messageType TEXT, contentType TEXT)',
+        );
+      },
+      version: 1,
+    );
+    return _database;
+  }
 }
 
 class ChatView extends StatefulWidget {
@@ -28,15 +65,35 @@ class ChatView extends StatefulWidget {
 class _ChatViewState extends State<ChatView> {
   TextEditingController inputMessage = TextEditingController();
   // String
-
+  int contentGlobalId = 1;
   String echolaliaMessage = '';
   String echolaliaImage = '';
   bool onTapCustomMenu = false;
   bool messageContentCheck = true;
-  List<ChatMessage> messages = [];
+  List<ChatMessage> chats = [];
   List<File> _images = [];
   File? _image;
   final picker = ImagePicker();
+
+  // Future<Database> getDB() async {
+  //   var databasesPath = await getDatabasesPath();
+  //   var path = join(databasesPath, 'lib/user.db');
+  //   var exists = await databaseExists(path);
+
+  //   if (!exists) {
+  //     try {
+  //       await Directory(dirname(path)).create(recursive: true);
+  //     } catch (_) {}
+
+  //     var data = await rootBundle.load(join('lib', 'user.db'));
+  //     List<int> bytes = data.buffer.asUint8List(
+  //       data.offsetInBytes,
+  //       data.lengthInBytes,
+  //     );
+  //     await File(path).writeAsBytes(bytes, flush: true);
+  //   }
+  //   return await openDatabase(path);
+  // }
 
   static Future get localPath async {
     final directory = await getApplicationDocumentsDirectory();
@@ -66,11 +123,15 @@ class _ChatViewState extends State<ChatView> {
     setState(() {
       echolaliaMessage = inputMessage.text;
       for (int index = 0; index < _images.length; index++) {
-        messages.add(
+        contentGlobalId++;
+        chats.add(
           ChatMessage(
-              messageContent: inputMessage.text,
-              messageType: "sender",
-              imageContent: _images[index]),
+            id: contentGlobalId,
+            // messageContent: inputMessage.text,
+            imageContent: _images[index],
+            messageType: "sender",
+            contentType: "image",
+          ),
         );
       }
       _images.clear();
@@ -83,12 +144,16 @@ class _ChatViewState extends State<ChatView> {
 
   sendMessage() {
     setState(() {
+      contentGlobalId++;
       echolaliaMessage = inputMessage.text;
-      messages.add(
+      chats.add(
         ChatMessage(
-            messageContent: inputMessage.text,
-            messageType: "sender",
-            imageContent: _image),
+          id: contentGlobalId,
+          messageContent: inputMessage.text,
+          // imageContent: _image,
+          messageType: "sender",
+          contentType: "text",
+        ),
       );
       _image = null;
       inputMessage.clear();
@@ -99,28 +164,29 @@ class _ChatViewState extends State<ChatView> {
 
   receiveMessage() {
     setState(() {
-      messages.add(
-        ChatMessage(messageContent: echolaliaMessage, messageType: "receiver"),
+      contentGlobalId++;
+      chats.add(
+        ChatMessage(
+          id: contentGlobalId,
+          messageContent: echolaliaMessage,
+          messageType: "receiver",
+          contentType: "text",
+        ),
       );
     });
   }
 
-  receiveImage() {
-    setState(() {
-      echolaliaImage = inputMessage.text;
-      messages.add(
-        ChatMessage(messageContent: inputMessage.text, messageType: "receiver"),
-      );
-      inputMessage.clear();
-    });
-  }
+  // receiveImage() {
+  //   setState(() {
+  //     echolaliaImage = inputMessage.text;
+  //     messages.add(
+  //       ChatMessage(messageContent: inputMessage.text, messageType: "receiver"),
+  //     );
+  //     inputMessage.clear();
+  //   });
+  // }
 
-  openCustomMenu() {
-    setState(() {
-      onTapCustomMenu = true;
-      FocusScope.of(context).unfocus();
-    });
-  }
+  openCustomMenu() {}
 
   closeCustomMenu() {
     setState(() {
@@ -233,48 +299,47 @@ class _ChatViewState extends State<ChatView> {
           ),
         ),
       ),
-      body: Stack(children: <Widget>[
-        ListView.builder(
-          itemCount: messages.length,
-          shrinkWrap: true,
-          padding: EdgeInsets.only(top: 10, bottom: 10),
-          // physics: NeverScrollableScrollPhysics(),
-          itemBuilder: (context, index) {
-            return Container(
-              padding:
-                  EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 10),
-              child: Align(
-                alignment: (messages[index].messageType == "receiver" ||
-                        messages[index].messageType == "receiver image"
-                    ? Alignment.topLeft
-                    : Alignment.topRight),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: (messages[index].messageType == "receiver" ||
-                            messages[index].messageType == "receiver image"
-                        ? Colors.grey.shade200
-                        : Colors.blue[200]),
+      body: Stack(
+        children: <Widget>[
+          ListView.builder(
+            itemCount: chats.length,
+            shrinkWrap: true,
+            padding: EdgeInsets.only(top: 10, bottom: 10),
+            // physics: NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              return Container(
+                padding:
+                    EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 10),
+                child: Align(
+                  alignment: (chats[index].messageType == "receiver"
+                      ? Alignment.topLeft
+                      : Alignment.topRight),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: (chats[index].messageType == "receiver"
+                          ? Colors.grey.shade200
+                          : Colors.blue[200]),
+                    ),
+                    padding: EdgeInsets.all(16),
+                    child: (chats[index].imageContent == null
+                        ? Text(
+                            chats[index].messageContent.toString(),
+                            style: TextStyle(fontSize: 15),
+                          )
+                        : Image.file(
+                            chats[index].imageContent!,
+                            width: 150,
+                            height: 150,
+                          )),
                   ),
-                  padding: EdgeInsets.all(16),
-                  child: (messages[index].imageContent == null
-                      ? Text(
-                          messages[index].messageContent,
-                          style: TextStyle(fontSize: 15),
-                        )
-                      : Image.file(
-                          messages[index].imageContent!,
-                          width: 150,
-                          height: 150,
-                        )),
                 ),
-              ),
-            );
-          },
-        ),
-        Align(
-          alignment: Alignment.bottomLeft,
-          child: Container(
+              );
+            },
+          ),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Container(
               padding: EdgeInsets.only(left: 10, bottom: 10, top: 10),
               height: (onTapCustomMenu) ? 300 : 80,
               width: double.infinity,
@@ -287,7 +352,10 @@ class _ChatViewState extends State<ChatView> {
                         onTap: () {
                           (onTapCustomMenu)
                               ? closeCustomMenu()
-                              : openCustomMenu();
+                              : setState(() {
+                                  onTapCustomMenu = true;
+                                  FocusScope.of(context).unfocus();
+                                });
                         },
                         child: Container(
                           height: 30,
@@ -396,9 +464,11 @@ class _ChatViewState extends State<ChatView> {
                         )
                       : Container(),
                 ],
-              )),
-        )
-      ]),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
