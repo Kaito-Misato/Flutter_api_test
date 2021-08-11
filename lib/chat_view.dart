@@ -13,14 +13,14 @@ class ChatMessage {
   int id;
   String? messageContent;
   File? imageContent;
-  String messageType;
+  int userId;
   String contentType;
 
   ChatMessage({
     required this.id,
     this.messageContent,
     this.imageContent,
-    required this.messageType,
+    required this.userId,
     required this.contentType,
   });
 
@@ -29,22 +29,26 @@ class ChatMessage {
       'id': id,
       'messageContent': messageContent,
       'imageContent': imageContent,
-      'messageType': messageType,
+      'userId': userId,
       'contentType': contentType,
     };
   }
 
   @override
   String toString() {
-    return 'ChatMessage{id: $id, messageContent: $messageContent, imagecontent: $imageContent, messageContent: $messageContent, contentType: $contentType,}';
+    // id: $id,
+    return 'ChatMessage{messageContent: $messageContent, imageContent: $imageContent, userId: $userId, contentType: $contentType,}';
   }
 
   static Future<Database> get database async {
     final Future<Database> _database = openDatabase(
       join(await getDatabasesPath(), 'chatdata.db'),
-      onCreate: (db, version) {
-        return db.execute(
-          'CREATE TABLE chat(id INTEGER PRIMARY KEY AUTOINCREMENT, messageContent TEXT, imageContent TEXT, messageType TEXT, contentType TEXT)',
+      onCreate: (db, version) async {
+        await db.execute(
+          'CREATE TABLE chats(id INTEGER PRIMARY KEY, message_content TEXT, image_content TEXT, user_id INTEGER, content_type TEXT)',
+        );
+        await db.execute(
+          'CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT)',
         );
       },
       version: 1,
@@ -63,6 +67,9 @@ class ChatView extends StatefulWidget {
 // ChatMessage messages = ChatMessage();
 
 class _ChatViewState extends State<ChatView> {
+  _ChatViewState() {
+    ChatMessage.database;
+  }
   TextEditingController inputMessage = TextEditingController();
   // String
   int contentGlobalId = 1;
@@ -75,25 +82,23 @@ class _ChatViewState extends State<ChatView> {
   File? _image;
   final picker = ImagePicker();
 
-  // Future<Database> getDB() async {
-  //   var databasesPath = await getDatabasesPath();
-  //   var path = join(databasesPath, 'lib/user.db');
-  //   var exists = await databaseExists(path);
-
-  //   if (!exists) {
-  //     try {
-  //       await Directory(dirname(path)).create(recursive: true);
-  //     } catch (_) {}
-
-  //     var data = await rootBundle.load(join('lib', 'user.db'));
-  //     List<int> bytes = data.buffer.asUint8List(
-  //       data.offsetInBytes,
-  //       data.lengthInBytes,
-  //     );
-  //     await File(path).writeAsBytes(bytes, flush: true);
-  //   }
-  //   return await openDatabase(path);
-  // }
+  Future<List<ChatMessage>> getChatMessage(Database db) async {
+    List<Map> messages = await db.query("chats");
+    return messages.map((Map m) {
+      int id = m["id"];
+      String messageContent = m["message_content"];
+      File imageContent = m["image_content"];
+      int userId = m["user_id"];
+      String contentType = m["content_type"];
+      return ChatMessage(
+        id: id,
+        messageContent: messageContent,
+        imageContent: imageContent,
+        userId: userId,
+        contentType: contentType,
+      );
+    }).toList();
+  }
 
   static Future get localPath async {
     final directory = await getApplicationDocumentsDirectory();
@@ -129,7 +134,7 @@ class _ChatViewState extends State<ChatView> {
             id: contentGlobalId,
             // messageContent: inputMessage.text,
             imageContent: _images[index],
-            messageType: "sender",
+            userId: 1,
             contentType: "image",
           ),
         );
@@ -151,7 +156,7 @@ class _ChatViewState extends State<ChatView> {
           id: contentGlobalId,
           messageContent: inputMessage.text,
           // imageContent: _image,
-          messageType: "sender",
+          userId: 1,
           contentType: "text",
         ),
       );
@@ -169,7 +174,7 @@ class _ChatViewState extends State<ChatView> {
         ChatMessage(
           id: contentGlobalId,
           messageContent: echolaliaMessage,
-          messageType: "receiver",
+          userId: 2,
           contentType: "text",
         ),
       );
@@ -311,13 +316,13 @@ class _ChatViewState extends State<ChatView> {
                 padding:
                     EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 10),
                 child: Align(
-                  alignment: (chats[index].messageType == "receiver"
+                  alignment: (chats[index].userId == 2
                       ? Alignment.topLeft
                       : Alignment.topRight),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: (chats[index].messageType == "receiver"
+                      color: (chats[index].userId == 2
                           ? Colors.grey.shade200
                           : Colors.blue[200]),
                     ),
