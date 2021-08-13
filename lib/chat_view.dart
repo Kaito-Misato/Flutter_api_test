@@ -10,14 +10,14 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class ChatMessage {
-  int id;
+  int? id;
   String? messageContent;
   File? imageContent;
   int userId;
   String contentType;
 
   ChatMessage({
-    required this.id,
+    this.id,
     this.messageContent,
     this.imageContent,
     required this.userId,
@@ -37,7 +37,7 @@ class ChatMessage {
   @override
   String toString() {
     // id: $id,
-    return 'ChatMessage{messageContent: $messageContent, imageContent: $imageContent, userId: $userId, contentType: $contentType,}';
+    return 'ChatMessage{id: $id, messageContent: $messageContent, imageContent: $imageContent, userId: $userId, contentType: $contentType,}';
   }
 
   static Future<Database> get database async {
@@ -45,15 +45,48 @@ class ChatMessage {
       join(await getDatabasesPath(), 'chatdata.db'),
       onCreate: (db, version) async {
         await db.execute(
-          'CREATE TABLE chats(id INTEGER PRIMARY KEY, message_content TEXT, image_content TEXT, user_id INTEGER, content_type TEXT)',
+          'CREATE TABLE chats(id INTEGER PRIMARY KEY AUTOINCREMENT, room_id INTEGER, message_content TEXT, image_content BLOB, user_id INTEGER, content_type TEXT)',
         );
         await db.execute(
-          'CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT)',
+          'CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, image TEXT)',
+        );
+        await db.execute(
+          'CREATE TABLE conversations(id INTEGER PRIMARY KEY)',
+        );
+        await db.execute(
+          'CREATE TABLE current(id INTEGER)',
         );
       },
       version: 1,
     );
     return _database;
+  }
+
+  static Future<List<ChatMessage>> getChatMessages() async {
+    final Database db = await database;
+    List<Map<String, dynamic>> messages =
+        await db.rawQuery('SELECT * FROM chats');
+    return List.generate(messages.length, (i) {
+      return ChatMessage(
+        id: messages[i]['id'],
+        messageContent: messages[i]['message_content'],
+        imageContent: messages[i]['image_content'],
+        userId: messages[i]['user_id'],
+        contentType: messages[i]['content_type'],
+      );
+    });
+  }
+
+  Future<void> insertChat(chat) async {
+    final Database db = await database;
+    await db.rawInsert(
+        'INSERT INTO chats(message_content, image_content, user_id, content_type)VALUES(?, ?, ?, ?)',
+        [
+          chat.messageContent,
+          chat.imageContent,
+          chat.userId,
+          chat.contentType
+        ]);
   }
 }
 
@@ -72,9 +105,11 @@ class _ChatViewState extends State<ChatView> {
   }
   TextEditingController inputMessage = TextEditingController();
   // String
-  int contentGlobalId = 1;
+  final int senderUserId = 1;
+  final int receiverUserId = 2;
+  // int contentGlobalId = 1;
   String echolaliaMessage = '';
-  String echolaliaImage = '';
+  // String echolaliaImage = '';
   bool onTapCustomMenu = false;
   bool messageContentCheck = true;
   List<ChatMessage> chats = [];
@@ -82,22 +117,8 @@ class _ChatViewState extends State<ChatView> {
   File? _image;
   final picker = ImagePicker();
 
-  Future<List<ChatMessage>> getChatMessage(Database db) async {
-    List<Map> messages = await db.query("chats");
-    return messages.map((Map m) {
-      int id = m["id"];
-      String messageContent = m["message_content"];
-      File imageContent = m["image_content"];
-      int userId = m["user_id"];
-      String contentType = m["content_type"];
-      return ChatMessage(
-        id: id,
-        messageContent: messageContent,
-        imageContent: imageContent,
-        userId: userId,
-        contentType: contentType,
-      );
-    }).toList();
+  Future<void> initializeChatMessages() async {
+    chats = await ChatMessage.getChatMessages();
   }
 
   static Future get localPath async {
@@ -125,19 +146,26 @@ class _ChatViewState extends State<ChatView> {
   // }
 
   sendImage() {
-    setState(() {
+    setState(() async {
       echolaliaMessage = inputMessage.text;
       for (int index = 0; index < _images.length; index++) {
-        contentGlobalId++;
-        chats.add(
-          ChatMessage(
-            id: contentGlobalId,
-            // messageContent: inputMessage.text,
-            imageContent: _images[index],
-            userId: 1,
-            contentType: "image",
-          ),
+        // contentGlobalId++;
+        // chats.add(
+        //   ChatMessage(
+        //     id: contentGlobalId,
+        //     // messageContent: inputMessage.text,
+        //     imageContent: _images[index],
+        //     userId: 1,
+        //     contentType: "image",
+        //   ),
+        // );
+        var chat = ChatMessage(
+          // id: contentGlobalId,
+          imageContent: _images[index],
+          userId: senderUserId,
+          contentType: "image",
         );
+        await chat.insertChat(chat);
       }
       _images.clear();
       _image = null;
@@ -148,18 +176,25 @@ class _ChatViewState extends State<ChatView> {
   }
 
   sendMessage() {
-    setState(() {
-      contentGlobalId++;
+    setState(() async {
+      // contentGlobalId++;
       echolaliaMessage = inputMessage.text;
-      chats.add(
-        ChatMessage(
-          id: contentGlobalId,
-          messageContent: inputMessage.text,
-          // imageContent: _image,
-          userId: 1,
-          contentType: "text",
-        ),
+      // chats.add(
+      //   ChatMessage(
+      //     id: contentGlobalId,
+      //     messageContent: inputMessage.text,
+      //     // imageContent: _image,
+      //     userId: 1,
+      //     contentType: "text",
+      //   ),
+      // );
+      var chat = ChatMessage(
+        // id: contentGlobalId,
+        messageContent: inputMessage.text,
+        userId: senderUserId,
+        contentType: 'text',
       );
+      await chat.insertChat(chat);
       _image = null;
       inputMessage.clear();
       closeCustomMenu();
@@ -167,19 +202,26 @@ class _ChatViewState extends State<ChatView> {
     });
   }
 
-  receiveMessage() {
-    setState(() {
-      contentGlobalId++;
-      chats.add(
-        ChatMessage(
-          id: contentGlobalId,
-          messageContent: echolaliaMessage,
-          userId: 2,
-          contentType: "text",
-        ),
-      );
-    });
-  }
+  // receiveMessage() {
+  //   setState(() async {
+  //     // contentGlobalId++;
+  //     // chats.add(
+  //     //   ChatMessage(
+  //     //     id: contentGlobalId,
+  //     //     messageContent: echolaliaMessage,
+  //     //     userId: 2,
+  //     //     contentType: "text",
+  //     //   ),
+  //     // );
+  //     var chat = ChatMessage(
+  //       // id: contentGlobalId,
+  //       messageContent: echolaliaMessage,
+  //       userId: receiverUserId,
+  //       contentType: "text",
+  //     );
+  //     await chat.insertChat(chat);
+  //   });
+  // }
 
   // receiveImage() {
   //   setState(() {
@@ -306,42 +348,51 @@ class _ChatViewState extends State<ChatView> {
       ),
       body: Stack(
         children: <Widget>[
-          ListView.builder(
-            itemCount: chats.length,
-            shrinkWrap: true,
-            padding: EdgeInsets.only(top: 10, bottom: 10),
-            // physics: NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) {
-              return Container(
-                padding:
-                    EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 10),
-                child: Align(
-                  alignment: (chats[index].userId == 2
-                      ? Alignment.topLeft
-                      : Alignment.topRight),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: (chats[index].userId == 2
-                          ? Colors.grey.shade200
-                          : Colors.blue[200]),
-                    ),
-                    padding: EdgeInsets.all(16),
-                    child: (chats[index].imageContent == null
-                        ? Text(
-                            chats[index].messageContent.toString(),
-                            style: TextStyle(fontSize: 15),
-                          )
-                        : Image.file(
-                            chats[index].imageContent!,
-                            width: 150,
-                            height: 150,
-                          )),
-                  ),
-                ),
-              );
-            },
-          ),
+          FutureBuilder(
+              future: initializeChatMessages(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: chats.length,
+                  shrinkWrap: true,
+                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                  // physics: NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return Container(
+                      padding: EdgeInsets.only(
+                          left: 14, right: 14, top: 10, bottom: 10),
+                      child: Align(
+                        alignment: (chats[index].userId == 2
+                            ? Alignment.topLeft
+                            : Alignment.topRight),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: (chats[index].userId == 2
+                                ? Colors.grey.shade200
+                                : Colors.blue[200]),
+                          ),
+                          padding: EdgeInsets.all(16),
+                          child: (chats[index].imageContent == null
+                              ? Text(
+                                  chats[index].messageContent.toString(),
+                                  style: TextStyle(fontSize: 15),
+                                )
+                              : Image.file(
+                                  chats[index].imageContent!,
+                                  width: 150,
+                                  height: 150,
+                                )),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
           Align(
             alignment: Alignment.bottomLeft,
             child: Container(
@@ -404,23 +455,23 @@ class _ChatViewState extends State<ChatView> {
 
                                 //     :
                                 // sendMessage();
-                                RegExp regExp = RegExp(r'([0-9]{1,2})');
-                                final results = regExp
-                                    .allMatches(echolaliaMessage)
-                                    .map((match) => match.group(0))
-                                    .toList();
-                                if (results.length != 0) {
-                                  Future.delayed(Duration(
-                                      seconds: int.parse(
-                                    results.first ?? '1',
-                                  ))).then((_) => receiveMessage());
-                                } else if (echolaliaMessage.isEmpty) {
-                                  return;
-                                } else {
-                                  Future.delayed(
-                                    Duration(seconds: 1),
-                                  ).then((_) => receiveMessage());
-                                }
+                                // RegExp regExp = RegExp(r'([0-9]{1,2})');
+                                // final results = regExp
+                                //     .allMatches(echolaliaMessage)
+                                //     .map((match) => match.group(0))
+                                //     .toList();
+                                // if (results.length != 0) {
+                                //   Future.delayed(Duration(
+                                //       seconds: int.parse(
+                                //     results.first ?? '1',
+                                //   ))).then((_) => receiveMessage());
+                                // } else if (echolaliaMessage.isEmpty) {
+                                //   return;
+                                // } else {
+                                //   Future.delayed(
+                                //     Duration(seconds: 1),
+                                //   ).then((_) => receiveMessage());
+                                // }
                               },
                         child: Icon(
                           Icons.send,
