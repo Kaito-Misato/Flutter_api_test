@@ -14,6 +14,7 @@ class GridPhoto extends ConsumerWidget {
   final gridMaxJudgeProvider = StateProvider((ref) => true);
   final gridMinJudgeProvider = StateProvider((ref) => true);
   final selectAxisProvider = StateProvider((ref) => 3);
+  
 
   List userData = [];
 

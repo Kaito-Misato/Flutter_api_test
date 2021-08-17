@@ -1,3 +1,4 @@
+// import 'dart:ffi';
 import 'dart:io';
 // import 'dart:math';
 
@@ -11,6 +12,7 @@ import 'package:path/path.dart';
 
 class ChatMessage {
   int? id;
+  int? conversationId;
   String? messageContent;
   File? imageContent;
   int userId;
@@ -18,6 +20,7 @@ class ChatMessage {
 
   ChatMessage({
     this.id,
+    this.conversationId,
     this.messageContent,
     this.imageContent,
     required this.userId,
@@ -27,6 +30,7 @@ class ChatMessage {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'conversationId': conversationId,
       'messageContent': messageContent,
       'imageContent': imageContent,
       'userId': userId,
@@ -37,7 +41,7 @@ class ChatMessage {
   @override
   String toString() {
     // id: $id,
-    return 'ChatMessage{id: $id, messageContent: $messageContent, imageContent: $imageContent, userId: $userId, contentType: $contentType,}';
+    return 'ChatMessage{id: $id, conversationId: $conversationId, messageContent: $messageContent, imageContent: $imageContent, userId: $userId, contentType: $contentType,}';
   }
 
   static Future<Database> get database async {
@@ -45,16 +49,20 @@ class ChatMessage {
       join(await getDatabasesPath(), 'chatdata.db'),
       onCreate: (db, version) async {
         await db.execute(
-          'CREATE TABLE chats(id INTEGER PRIMARY KEY AUTOINCREMENT, room_id INTEGER, message_content TEXT, image_content BLOB, user_id INTEGER, content_type TEXT)',
+          'CREATE TABLE chats(id INTEGER PRIMARY KEY AUTOINCREMENT, conversation_id INTEGER, message_content TEXT, image_content BLOB, user_id INTEGER, content_type TEXT)',
         );
         await db.execute(
-          'CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, image TEXT)',
+          'CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, icon TEXT, last_message TEXT)',
         );
         await db.execute(
-          'CREATE TABLE conversations(id INTEGER PRIMARY KEY)',
+          'CREATE TABLE conversations(id INTEGER PRIMARY KEY, user_id INTEGER, user_name TEXT, user_icon TEXT)',
         );
         await db.execute(
           'CREATE TABLE current(id INTEGER)',
+        );
+        await db.rawInsert(
+          'INSERT INTO current(id)VALUES(?)',
+          [1],
         );
       },
       version: 1,
@@ -62,13 +70,17 @@ class ChatMessage {
     return _database;
   }
 
-  static Future<List<ChatMessage>> getChatMessages() async {
+  static Future<List<ChatMessage>> getChatMessages(int conversationId) async {
     final Database db = await database;
-    List<Map<String, dynamic>> messages =
-        await db.rawQuery('SELECT * FROM chats');
+    List<Map<String, dynamic>> messages = await db.rawQuery(
+      'SELECT * FROM chats WHERE conversation_id = ?',
+      [conversationId],
+    );
+    // messages = messages.reversed.toList();
     return List.generate(messages.length, (i) {
       return ChatMessage(
         id: messages[i]['id'],
+        conversationId: messages[i]['conversation_id'],
         messageContent: messages[i]['message_content'],
         imageContent: messages[i]['image_content'],
         userId: messages[i]['user_id'],
@@ -80,30 +92,36 @@ class ChatMessage {
   Future<void> insertChat(chat) async {
     final Database db = await database;
     await db.rawInsert(
-        'INSERT INTO chats(message_content, image_content, user_id, content_type)VALUES(?, ?, ?, ?)',
-        [
-          chat.messageContent,
-          chat.imageContent,
-          chat.userId,
-          chat.contentType
-        ]);
+      'INSERT INTO chats(conversation_id, message_content, image_content, user_id, content_type)VALUES(?, ?, ?, ?, ?)',
+      [
+        chat.conversationId,
+        chat.messageContent,
+        chat.imageContent,
+        chat.userId,
+        chat.contentType,
+      ],
+    );
   }
 }
 
 class ChatView extends StatefulWidget {
-  const ChatView({Key? key}) : super(key: key);
+  int conversationId;
+  int currentId;
+  ChatView(this.conversationId, this.currentId);
 
   @override
-  _ChatViewState createState() => _ChatViewState();
+  _ChatViewState createState() => _ChatViewState(conversationId, currentId);
 }
 
 // ChatMessage messages = ChatMessage();
 
 class _ChatViewState extends State<ChatView> {
-  _ChatViewState() {
+  _ChatViewState(this.conversationId, this.currentId) {
     ChatMessage.database;
   }
   TextEditingController inputMessage = TextEditingController();
+  ScrollController chatController = ScrollController();
+
   // String
   final int senderUserId = 1;
   final int receiverUserId = 2;
@@ -116,9 +134,11 @@ class _ChatViewState extends State<ChatView> {
   List<File> _images = [];
   File? _image;
   final picker = ImagePicker();
+  int conversationId;
+  int currentId;
 
   Future<void> initializeChatMessages() async {
-    chats = await ChatMessage.getChatMessages();
+    chats = await ChatMessage.getChatMessages(conversationId);
   }
 
   static Future get localPath async {
@@ -161,6 +181,7 @@ class _ChatViewState extends State<ChatView> {
         // );
         var chat = ChatMessage(
           // id: contentGlobalId,
+          conversationId: 1,
           imageContent: _images[index],
           userId: senderUserId,
           contentType: "image",
@@ -190,6 +211,7 @@ class _ChatViewState extends State<ChatView> {
       // );
       var chat = ChatMessage(
         // id: contentGlobalId,
+        conversationId: conversationId,
         messageContent: inputMessage.text,
         userId: senderUserId,
         contentType: 'text',
@@ -286,6 +308,13 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   Widget build(BuildContext context) {
+    // initializeChatMessages();
+    // WidgetsBinding.instance?.addPostFrameCallback((_) {
+    //   print(chatController.toString());
+    //   chatController.jumpTo(
+    //     chatController.position.maxScrollExtent,
+    //   );
+    // });
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -346,7 +375,7 @@ class _ChatViewState extends State<ChatView> {
           ),
         ),
       ),
-      body: Stack(
+      body: Column(
         children: <Widget>[
           FutureBuilder(
               future: initializeChatMessages(),
@@ -356,41 +385,45 @@ class _ChatViewState extends State<ChatView> {
                     child: CircularProgressIndicator(),
                   );
                 }
-                return ListView.builder(
-                  itemCount: chats.length,
-                  shrinkWrap: true,
-                  padding: EdgeInsets.only(top: 10, bottom: 10),
-                  // physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return Container(
-                      padding: EdgeInsets.only(
-                          left: 14, right: 14, top: 10, bottom: 10),
-                      child: Align(
-                        alignment: (chats[index].userId == 2
-                            ? Alignment.topLeft
-                            : Alignment.topRight),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: (chats[index].userId == 2
-                                ? Colors.grey.shade200
-                                : Colors.blue[200]),
+                return Expanded(
+                  child: ListView.builder(
+                    // reverse: true,
+                    controller: chatController,
+                    itemCount: chats.length,
+                    shrinkWrap: true,
+                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    // physics: NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      return Container(
+                        padding: EdgeInsets.only(
+                            left: 14, right: 14, top: 10, bottom: 10),
+                        child: Align(
+                          alignment: (chats[index].userId != currentId
+                              ? Alignment.topLeft
+                              : Alignment.topRight),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: (chats[index].userId != currentId
+                                  ? Colors.grey.shade200
+                                  : Colors.blue[200]),
+                            ),
+                            padding: EdgeInsets.all(16),
+                            child: (chats[index].imageContent == null
+                                ? Text(
+                                    chats[index].messageContent.toString(),
+                                    style: TextStyle(fontSize: 15),
+                                  )
+                                : Image.file(
+                                    chats[index].imageContent!,
+                                    width: 150,
+                                    height: 150,
+                                  )),
                           ),
-                          padding: EdgeInsets.all(16),
-                          child: (chats[index].imageContent == null
-                              ? Text(
-                                  chats[index].messageContent.toString(),
-                                  style: TextStyle(fontSize: 15),
-                                )
-                              : Image.file(
-                                  chats[index].imageContent!,
-                                  width: 150,
-                                  height: 150,
-                                )),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 );
               }),
           Align(
@@ -446,7 +479,14 @@ class _ChatViewState extends State<ChatView> {
                             ? null
                             : () {
                                 if (_images.isEmpty) {
-                                  sendMessage();
+                                  setState(() {
+                                    sendMessage();
+                                    FocusScope.of(context).unfocus();
+                                    if (chatController.hasClients) {
+                                      chatController.jumpTo(chatController
+                                          .position.maxScrollExtent);
+                                    }
+                                  });
                                 } else {
                                   sendImage();
                                 }
@@ -527,4 +567,24 @@ class _ChatViewState extends State<ChatView> {
       ),
     );
   }
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   if (chatController.hasClients) {
+  //     scrollToBottom();
+  //   }
+  //   initializeChatMessages();
+  // }
+
+  // void scrollToBottom() {
+  //   // final bottomOffset = chatController.position.maxScrollExtent;
+  //   return chatController.jumpTo(chatController.position.maxScrollExtent);
+  // }
+
+  // @override
+  // void dispose() {
+  //   super.dispose();
+  //   chatController.dispose();
+  // }
 }
