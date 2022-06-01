@@ -60,61 +60,7 @@ class _ChatState extends State<Chat> {
     getCurrentUser();
   }
 
-  List<ChatUsers> chatUsers = [
-    // ChatUsers(
-    //     id: 1,
-    //     text: "Jane Russel",
-    //     secondaryText: "Awesome Setup",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "Now"),
-    // ChatUsers(
-    //     id: 2,
-    //     text: "Glady's Murphy",
-    //     secondaryText: "That's Great",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "Yesterday"),
-    // ChatUsers(
-    //     id: 3,
-    //     text: "Jorge Henry",
-    //     secondaryText: "Hey where are you?",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "31 Mar"),
-    // ChatUsers(
-    //     id: 4,
-    //     text: "Philip Fox",
-    //     secondaryText: "Busy! Call me in 20 mins",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "28 Mar"),
-    // ChatUsers(
-    //     id: 5,
-    //     text: "Debra Hawkins",
-    //     secondaryText: "Thankyou, It's awesome",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "23 Mar"),
-    // ChatUsers(
-    //     id: 6,
-    //     text: "Jacob Pena",
-    //     secondaryText: "will update you in evening",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "17 Mar"),
-    // ChatUsers(
-    //     id: 7,
-    //     text: "Andrey Jones",
-    //     secondaryText: "Can you please share the file?",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "24 Feb"),
-    // ChatUsers(
-    //     id: 8,
-    //     text: "John Wick",
-    //     secondaryText: "How are you?",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "18 Feb"),
-    // ChatUsers(
-    //     text: "unknown",
-    //     secondaryText: "removed message",
-    //     image: "https://randomuser.me/api/portraits/men/6.jpg",
-    //     time: "1 jan"),
-  ];
+  List<ChatUsers> chatUsers = [];
 
   List<ChatUsers> searchResults = [];
 
@@ -125,7 +71,6 @@ class _ChatState extends State<Chat> {
       chatUsers = await getChatUsers();
       searchResults.addAll(chatUsers);
     });
-    // search(myController.text);
   }
 
   void search(String query) {
@@ -149,12 +94,6 @@ class _ChatState extends State<Chat> {
   }
 
   void _onrefresh() {}
-
-  // @override
-  // void dispose() {
-  //   myController.dispose();
-  //   super.dispose();
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -190,14 +129,6 @@ class _ChatState extends State<Chat> {
                             color: Colors.pink,
                             size: 20,
                           ),
-                          // SizedBox(
-                          //   width: 2,
-                          // ),
-                          // Text(
-                          //   "Add New",
-                          //   style: TextStyle(
-                          //       fontSize: 14, fontWeight: FontWeight.bold),
-                          // ),
                         ],
                       ),
                     )
@@ -227,33 +158,32 @@ class _ChatState extends State<Chat> {
                 ),
               ),
             ),
-            RefreshIndicator(
-              onRefresh: () async {},
-              child: FutureBuilder(
-                future: initializeChatUsers(),
-                builder: (context, snapshot) {
-                  return ListView.builder(
-                    itemCount: searchResults.length,
-                    shrinkWrap: true,
-                    padding: EdgeInsets.only(top: 16),
-                    // physics: NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      return _ConversationListState(
-                        text: searchResults[index].text,
-                        secondaryText: searchResults[index].secondaryText,
-                        image: searchResults[index].image,
-                        time: searchResults[index].time,
-                        conversationId: searchResults[index].conversationId,
-                        isMessageRead:
-                            (index >= 0 && index <= 1) ? true : false,
-                        index: index,
-                        currentId: current[0],
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+            // RefreshIndicator(
+            //   onRefresh: () async {},
+            //   child: FutureBuilder(
+            //     future: initializeChatUsers(),
+            //     builder: (context, snapshot) {
+            //       return ListView.builder(
+            //         itemCount: searchResults.length,
+            //         shrinkWrap: true,
+            //         padding: EdgeInsets.only(top: 16),
+            //         itemBuilder: (context, index) {
+            //           return _ConversationListState(
+            //             text: searchResults[index].text,
+            //             secondaryText: searchResults[index].secondaryText,
+            //             image: searchResults[index].image,
+            //             time: searchResults[index].time,
+            //             conversationId: searchResults[index].conversationId,
+            //             isMessageRead:
+            //                 (index >= 0 && index <= 1) ? true : false,
+            //             index: index,
+            //             currentId: current[0],
+            //           );
+            //         },
+            //       );
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -325,107 +255,87 @@ class ChatUsers {
   });
 }
 
-// class ConversationList extends StatefulWidget {
+// class _ConversationListState extends HookWidget {
 //   String text;
 //   String secondaryText;
 //   String image;
 //   String time;
+//   int conversationId;
 //   bool isMessageRead;
-//   ConversationList(
-//       {required this.text,
-//       required this.secondaryText,
-//       required this.image,
-//       required this.time,
-//       required this.isMessageRead});
+//   int index;
+//   int currentId;
+//   _ConversationListState({
+//     required this.text,
+//     required this.secondaryText,
+//     required this.image,
+//     required this.time,
+//     required this.conversationId,
+//     required this.isMessageRead,
+//     required this.index,
+//     required this.currentId,
+//   });
+
 //   @override
-//   _ConversationListState createState() => _ConversationListState();
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: () {
+//         Navigator.push(context, MaterialPageRoute(builder: (context) {
+//           return ChatView(conversationId, currentId);
+//         }));
+//       },
+//       child: Container(
+//         padding: EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
+//         child: Row(
+//           children: <Widget>[
+//             Expanded(
+//               child: Row(
+//                 children: <Widget>[
+//                   CircleAvatar(
+//                     backgroundImage: NetworkImage(image),
+//                     maxRadius: 30,
+//                   ),
+//                   SizedBox(
+//                     width: 16,
+//                   ),
+//                   Expanded(
+//                     child: Container(
+//                       color: Colors.transparent,
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: <Widget>[
+//                           HighlightedText(
+//                             wholeString: text,
+//                             highlightedString: myController.text,
+//                           ),
+//                           SizedBox(
+//                             height: 6,
+//                           ),
+//                           Text(
+//                             secondaryText,
+//                             style: TextStyle(
+//                                 fontSize: 13,
+//                                 color: Colors.grey.shade600,
+//                                 fontWeight: isMessageRead
+//                                     ? FontWeight.bold
+//                                     : FontWeight.normal),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//             Text(
+//               time,
+//               style: TextStyle(
+//                   fontSize: 12,
+//                   fontWeight:
+//                       isMessageRead ? FontWeight.bold : FontWeight.normal),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
 // }
-
-class _ConversationListState extends HookWidget {
-  String text;
-  String secondaryText;
-  String image;
-  String time;
-  int conversationId;
-  bool isMessageRead;
-  int index;
-  int currentId;
-  _ConversationListState({
-    required this.text,
-    required this.secondaryText,
-    required this.image,
-    required this.time,
-    required this.conversationId,
-    required this.isMessageRead,
-    required this.index,
-    required this.currentId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // _ChatState myController = _ChatState();
-
-    // final useQueryState = useProvider(queryState);
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) {
-          return ChatView(conversationId, currentId);
-        }));
-      },
-      child: Container(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Row(
-                children: <Widget>[
-                  CircleAvatar(
-                    backgroundImage: NetworkImage(image),
-                    maxRadius: 30,
-                  ),
-                  SizedBox(
-                    width: 16,
-                  ),
-                  Expanded(
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          HighlightedText(
-                            wholeString: text,
-                            highlightedString: myController.text,
-                          ),
-                          SizedBox(
-                            height: 6,
-                          ),
-                          Text(
-                            secondaryText,
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                                fontWeight: isMessageRead
-                                    ? FontWeight.bold
-                                    : FontWeight.normal),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              time,
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight:
-                      isMessageRead ? FontWeight.bold : FontWeight.normal),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
